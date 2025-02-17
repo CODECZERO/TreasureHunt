@@ -9,7 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getTeamsByLevel, addLevelAndSecretKey, addSecretCodeToTeam, addQuestionf, getRandomQuestionByLevel } from "../db/Query.Nosql.js";
+import AsyncHandler from "../util/AsyncHandler.js";
 const FilterTeams = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { level } = req.params; // Extract level from URL params
@@ -110,4 +112,19 @@ const getRandomQ = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(500).json(new ApiError(500, error instanceof Error ? error.message : "Internal Server Error"));
     }
 });
-export { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ };
+const CheckAnswer = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { question, answer } = req.body;
+    if (!question || !answer)
+        throw new ApiError(400, "Invalid data");
+    const genAI = yield new GoogleGenerativeAI(process.env.AI_KEY);
+    if (!genAI)
+        throw new ApiError(500, "AI Api key is not provied");
+    const model = yield genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const promt = `Question: ${question}, Answer:${answer}, take question and answer check if answer is correct based on 
+    question and reutrn only true or false, just check if code is correct or not , just tell me that in single 1 line`;
+    const result = yield model.generateContent(promt);
+    if (!result)
+        throw new ApiError(500, "No result");
+    return res.status(200).json(new ApiResponse(200, result.response.candidates, "Successfull"));
+}));
+export { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ, CheckAnswer };

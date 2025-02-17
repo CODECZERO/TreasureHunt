@@ -8,7 +8,6 @@ const QuestionSchema = new mongoose.Schema({
     output: {
         type: [String],
         required: true,
-        unique: true
     },
     level: {
         type: String,

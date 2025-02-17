@@ -1,7 +1,9 @@
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
 import { Request, Response, NextFunction } from "express";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getTeamsByLevel, addLevelAndSecretKey, addSecretCodeToTeam, addQuestionf, getRandomQuestionByLevel } from "../db/Query.Nosql.js";
+import AsyncHandler from "../util/AsyncHandler.js";
 
 const FilterTeams = async (req: Request, res: Response) => {
     try {
@@ -124,11 +126,23 @@ const getRandomQ = async (req: Request, res: Response) => {
     }
 };
 
-
+const CheckAnswer=AsyncHandler(async(req:Request,res:Response)=>{
+    const {question,answer}=req.body;
+    if(!question||!answer) throw new ApiError(400,"Invalid data");
+    const genAI=await new GoogleGenerativeAI(process.env.AI_KEY as string);
+    if(!genAI) throw new ApiError(500,"AI Api key is not provied");
+    const model=await genAI.getGenerativeModel({model:"gemini-2.0-flash"});
+    const promt=`Question: ${question}, Answer:${answer}, take question and answer check if answer is correct based on 
+    question and reutrn only true or false, just check if code is correct or not , just tell me that in single 1 line`;
+    const result=await model.generateContent(promt)
+    if(!result) throw new ApiError(500,"No result");
+    return res.status(200).json(new ApiResponse(200,result.response.candidates,"Successfull")); 
+});
 export {
     FilterTeams,
     addSecreaKey,
     TeamReg,
     addQuestion,
-    getRandomQ
+    getRandomQ,
+    CheckAnswer
 }

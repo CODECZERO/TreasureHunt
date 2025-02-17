@@ -131,13 +131,14 @@ const CheckAnswer=AsyncHandler(async(req:Request,res:Response)=>{
     if(!question||!answer) throw new ApiError(400,"Invalid data");
     const genAI=await new GoogleGenerativeAI(process.env.AI_KEY as string);
     if(!genAI) throw new ApiError(500,"AI Api key is not provied");
-    const model=await genAI.getGenerativeModel({model:"gemini-2.0-flash"});
-    const promt=`Question: ${question}, Answer:${answer}, take question and answer check if answer is correct based on 
-    question and reutrn only true or false, just check if code is correct or not , just tell me that in single 1 line`;
-    const result=await model.generateContent(promt)
+    const model=await genAI.getGenerativeModel({model:"gemini-1.5-flash"});
+    const prompt = `Check if the answer '${answer}' is correct for the question '${question}'. Reply ONLY 'True' or 'False'.`;
+    const result=await model.generateContent(prompt)
     if(!result) throw new ApiError(500,"No result");
     return res.status(200).json(new ApiResponse(200,result.response.candidates,"Successfull")); 
 });
+
+
 export {
     FilterTeams,
     addSecreaKey,

@@ -119,10 +119,9 @@ const CheckAnswer = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0,
     const genAI = yield new GoogleGenerativeAI(process.env.AI_KEY);
     if (!genAI)
         throw new ApiError(500, "AI Api key is not provied");
-    const model = yield genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const promt = `Question: ${question}, Answer:${answer}, take question and answer check if answer is correct based on 
-    question and reutrn only true or false, just check if code is correct or not , just tell me that in single 1 line`;
-    const result = yield model.generateContent(promt);
+    const model = yield genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `Check if the answer '${answer}' is correct for the question '${question}'. Reply ONLY 'True' or 'False'.`;
+    const result = yield model.generateContent(prompt);
     if (!result)
         throw new ApiError(500, "No result");
     return res.status(200).json(new ApiResponse(200, result.response.candidates, "Successfull"));

@@ -11,6 +11,7 @@ const connectAll=async()=>{
     await rabbitmq.connectRabbitMq("StartRoom");
     console.log("queue is connected");
     await connectDb();
+    console.log("mongodb connected");
     await connectRedis();
     //@ts-ignore.
     await runWebSocket();

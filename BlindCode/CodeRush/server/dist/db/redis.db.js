@@ -10,6 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { createClient } from "redis";
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
+import { config } from "dotenv";
+config();
 let client;
 const keys = {
     key1: process.env.KEY1,
@@ -18,6 +20,28 @@ const keys = {
     key4: process.env.KEY4,
     key5: process.env.KEY5,
 };
+const ReallocatKey = (key) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const addKey = yield client.lPush("AIModelKey", key);
+        if (!addKey)
+            return new ApiError(400, "No key is provied");
+        return new ApiResponse(200, "Api key added back");
+    }
+    catch (error) {
+        return error;
+    }
+});
+const addKeyTORedis = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        for (const key of Object.values(keys)) {
+            if (key)
+                yield ReallocatKey(key); //using this function key will be added back or added to redis server for futhere use.
+        }
+    }
+    catch (error) {
+        throw error;
+    }
+});
 const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         client = yield createClient({ url: process.env.REDISURL });
@@ -39,28 +63,6 @@ const AllocatKey = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         return error;
-    }
-});
-const ReallocatKey = (key) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const addKey = yield client.lPush("AIModelKey", key);
-        if (!addKey)
-            return new ApiError(400, "No key is provied");
-        return new ApiResponse(200, "Api key added back");
-    }
-    catch (error) {
-        return error;
-    }
-});
-const addKeyTORedis = () => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        for (const key of Object.values(keys)) {
-            if (key)
-                yield ReallocatKey(key); //using this function key will be added back or added to redis server for futhere use.
-        }
-    }
-    catch (error) {
-        throw error;
     }
 });
 export { connectRedis, ReallocatKey, AllocatKey, };

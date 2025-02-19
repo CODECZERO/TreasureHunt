@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { ApiError } from "../util/ApiError.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AllocatKey, ReallocatKey } from "../db/redis.db.js";
 class AiCheck {
     constructor(answer, question) {
         this.answer = "";
@@ -62,6 +63,21 @@ class AiCheck {
             }
             catch (error) {
                 return error;
+            }
+        });
+        this.ModelHandler = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const key = yield AllocatKey();
+                if (!key) {
+                    setTimeout(() => this.ModelHandler(), 2000);
+                    return;
+                }
+                const ans = yield this.CheckAnswer(key);
+                yield ReallocatKey(key);
+                return ans;
+            }
+            catch (error) {
+                throw error;
             }
         });
         this.answer = answer;

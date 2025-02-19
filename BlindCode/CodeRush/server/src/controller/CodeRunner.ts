@@ -1,6 +1,6 @@
 import { ApiError } from "../util/ApiError.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import { AllocatKey, ReallocatKey } from "../db/redis.db.js";
 class AiCheck {
 
     private answer="";
@@ -61,6 +61,21 @@ class AiCheck {
 
         } catch (error) {
             return error;
+        }
+    }
+
+    public ModelHandler=async()=>{
+        try {
+            const key= await AllocatKey();
+            if(!key){
+                setTimeout(()=>this.ModelHandler(),2000);
+                return;
+            }
+            const ans=await this.CheckAnswer(key as string);
+            await ReallocatKey(key as string);
+            return ans;
+        } catch (error) {
+            throw error;
         }
     }
 }

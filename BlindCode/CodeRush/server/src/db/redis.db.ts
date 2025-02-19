@@ -1,6 +1,8 @@
 import {createClient, RedisClientType} from "redis";
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
+import { config } from "dotenv";
+config();
 
 let client:RedisClientType;
 
@@ -11,6 +13,28 @@ const keys={
     key4:process.env.KEY4,
     key5:process.env.KEY5,
 }
+
+const ReallocatKey=async(key:string)=>{
+    try {
+        const addKey=await client.lPush("AIModelKey",key);
+        if(!addKey) return new ApiError(400,"No key is provied");
+        return new ApiResponse(200,"Api key added back");
+    } catch (error) {
+        return error;
+    }
+}
+
+const addKeyTORedis=async()=>{
+    try {
+        for(const key of Object.values(keys)){
+            if(key) await ReallocatKey(key)//using this function key will be added back or added to redis server for futhere use.
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+
 
 const connectRedis=async()=>{
     try {
@@ -34,25 +58,8 @@ const AllocatKey=async()=>{
   }
 }
 
-const ReallocatKey=async(key:string)=>{
-    try {
-        const addKey=await client.lPush("AIModelKey",key);
-        if(!addKey) return new ApiError(400,"No key is provied");
-        return new ApiResponse(200,"Api key added back");
-    } catch (error) {
-        return error;
-    }
-}
 
-const addKeyTORedis=async()=>{
-    try {
-        for(const key of Object.values(keys)){
-            if(key) await ReallocatKey(key)//using this function key will be added back or added to redis server for futhere use.
-        }
-    } catch (error) {
-        throw error;
-    }
-}
+
 
 
 export{

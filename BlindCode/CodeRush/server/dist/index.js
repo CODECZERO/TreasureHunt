@@ -18,6 +18,7 @@ const connectAll = () => __awaiter(void 0, void 0, void 0, function* () {
     yield rabbitmq.connectRabbitMq("StartRoom");
     console.log("queue is connected");
     yield connectDb();
+    console.log("mongodb connected");
     yield connectRedis();
     //@ts-ignore.
     yield runWebSocket();

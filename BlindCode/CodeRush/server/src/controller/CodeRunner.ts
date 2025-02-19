@@ -79,7 +79,6 @@ class AiCheck {
             }
 
             const ans = await this.CheckAnswer(key as string);
-            console.log(key);
             await ReallocatKey(key as string);
             return ans;
         } catch (error) {

@@ -58,7 +58,7 @@ const AllocatKey = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const getKey = yield client.blPop("AIModelKey", 5);
         if (!getKey) {
-            yield new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+            yield new Promise(resolve => setTimeout(resolve, 5000));
             return;
         }
         return getKey.element;

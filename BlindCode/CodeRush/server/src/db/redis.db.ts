@@ -27,11 +27,11 @@ const ReallocatKey = async (key: string) => {
 const addKeyTORedis = async () => {
     try {
         for (const key of Object.values(keys)) {
-            if (key) await ReallocatKey(key)//using this function key will be added back or added to redis server for futhere use.
-        }
+    if (key) await ReallocatKey(key)//using this function key will be added back or added to redis server for futhere use.
+}
     } catch (error) {
-        throw error;
-    }
+    throw error;
+}
 }
 
 
@@ -52,7 +52,7 @@ const AllocatKey = async () => {
     try {
         const getKey = await client.blPop("AIModelKey", 5);
         if (!getKey) {
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+            await new Promise(resolve => setTimeout(resolve, 5000));
             return;
         }
         return getKey.element;

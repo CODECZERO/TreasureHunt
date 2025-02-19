@@ -15,7 +15,7 @@ import (
 // Constants
 const (
 	serverURL         = "ws://localhost:3000/" // WebSocket server URL
-	totalClients      = 20  // Number of concurrent WebSocket connections
+	totalClients      = 10  // Number of concurrent WebSocket connections
 	messagesPerClient = 1  // Number of messages each client will send
 )
 
@@ -42,7 +42,7 @@ func generateMessage(clientID, msgIndex int) string {
 	msg := MessageData{
 		MessageId:     fmt.Sprintf("MSG_%d_%d", clientID, msgIndex),
 		TypeOfMessage: "SEND_MESSAGE",
-		RoomName:      "room_48",
+		RoomName:      "room_40",
 		UserId:        fmt.Sprintf("user_%d", clientID),
 		Question:      "2+2",
 		Answer:        "4",

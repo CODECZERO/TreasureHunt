@@ -27,6 +27,7 @@ const PmP = (parsedMessage, roomName) => __awaiter(void 0, void 0, void 0, funct
     try {
         const AiCheckModel = new AiCheck(parsedMessage.answer, parsedMessage.question);
         const ans = yield AiCheckModel.ModelHandler(); //non-blocking execution 
+        console.log(ans);
         if (rooms[roomName]) {
             for (const client of rooms[roomName]) {
                 if (client.readyState === WebSocket.OPEN && client.userId === parsedMessage.userId) {
@@ -63,6 +64,12 @@ const receiveMessage = (ws) => __awaiter(void 0, void 0, void 0, function* () {
         if (!ws.roomName) {
             throw new ApiError(400, "Room name not set for WebSocket");
         }
+        // const isKey = await isKeyAvaiable();
+        // if (!isKey) {
+        //     console.log("No AI key available. Waiting 10s before retrying...");
+        //     await new Promise(resolve => setTimeout(resolve, 200)); // Wait for 2 seconds before retrying          
+        //     return;
+        // }
         yield rabbitmq.subData(ws.roomName);
         yield rabbitmq.channel.consume(rabbitmq.queue.queue, (message) => __awaiter(void 0, void 0, void 0, function* () {
             if (message) {

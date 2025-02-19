@@ -2,10 +2,23 @@ import { config } from "dotenv";
 config();
 import app from "./app.js";
 import { connectDb } from "./db/mongoConfig.js";
+import { connectRedis } from "./db/redis.db.js";
+import { runWebSocket } from "./Websocket/Websocket.main.js";
+import rabbitmq from "./queues/rabbitMq.js";
+
+
+const connectAll=async()=>{
+    await rabbitmq.connectRabbitMq("StartRoom");
+    console.log("queue is connected");
+    await connectDb();
+    await connectRedis();
+    //@ts-ignore.
+    await runWebSocket();
+}
 
 try {
 
-    connectDb().then(() => {
+    connectAll().then(() => {
         app.listen(4008, () => {
             console.log("server running on 4008");
         });

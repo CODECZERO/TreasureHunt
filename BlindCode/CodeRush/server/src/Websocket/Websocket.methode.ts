@@ -4,6 +4,7 @@ import { MessageData, CustomWebSocket, rooms, clients } from './Websocket.main.j
 import { ApiError } from "../util/ApiError.js";
 import rabbitmq from "../queues/rabbitMq.js";
 import { AiCheck } from "../controller/CodeRunner.js";
+import { isKeyAvaiable } from "../db/redis.db.js";
 
 const sendMessage = async (messageData: MessageData, ws: CustomWebSocket): Promise<void> => {
     try {
@@ -18,8 +19,10 @@ const sendMessage = async (messageData: MessageData, ws: CustomWebSocket): Promi
 //this function will handle AI model in parallel
 const PmP = async (parsedMessage: MessageData, roomName: string) => {//parallel Ai model processing
     try {
+
         const AiCheckModel = new AiCheck(parsedMessage.answer, parsedMessage.question);
         const ans = await AiCheckModel.ModelHandler();//non-blocking execution 
+
         if (rooms[roomName]) {
             for (const client of rooms[roomName]) {
                 if (client.readyState === WebSocket.OPEN && client.userId === parsedMessage.userId) {
@@ -29,7 +32,7 @@ const PmP = async (parsedMessage: MessageData, roomName: string) => {//parallel 
                         userId: parsedMessage.userId,
                         question: parsedMessage.question,
                         answer: parsedMessage.answer,
-                        aiResult: ans // ✅ Send AI response to WebSocket client
+                        aiResult: ans
                     }));
                 }
             }
@@ -59,9 +62,9 @@ const receiveMessage = async (ws: CustomWebSocket): Promise<void> => {
         }
 
         await rabbitmq.subData(ws.roomName);
-        await rabbitmq.channel.consume(rabbitmq.queue.queue, (message: ConsumeMessage | null) => {
+        await rabbitmq.channel.consume(rabbitmq.queue.queue, async (message: ConsumeMessage | null) => {
             if (message) {
-                broadcastMessage(message, ws.roomName!).catch(console.error);
+                await broadcastMessage(message, ws.roomName!).catch(console.error);
             }
         });
     } catch (error) {

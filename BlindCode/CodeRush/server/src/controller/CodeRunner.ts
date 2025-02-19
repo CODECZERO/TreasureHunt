@@ -3,15 +3,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AllocatKey, ReallocatKey } from "../db/redis.db.js";
 class AiCheck {
 
-    private answer="";
-    private question="";
+    private answer = "";
+    private question = "";
 
-    constructor(answer:string,question:string){
-        this.answer=answer;
-        this.question=question
+    constructor(answer: string, question: string) {
+        this.answer = answer;
+        this.question = question;
     }
 
-    public CheckAnswer = async (AI_KEY:string) => {
+    public CheckAnswer = async (AI_KEY: string) => {
         try {
             if (!this.question || !this.answer) throw new ApiError(400, "Invalid data");
             const genAI = await new GoogleGenerativeAI(AI_KEY);
@@ -53,9 +53,9 @@ class AiCheck {
     };
 
 
-    public Judge0 = async (code:string,stdout:string,IsSafe:string) => {
+    public Judge0 = async (code: string, stdout: string, IsSafe: string) => {
         try {
-            if(IsSafe=="False"||IsSafe=="false"||IsSafe=="FALSE") return new ApiError(505,"Code is not safe to run");
+            if (IsSafe == "False" || IsSafe == "false" || IsSafe == "FALSE") return new ApiError(505, "Code is not safe to run");
 
 
 
@@ -64,14 +64,22 @@ class AiCheck {
         }
     }
 
-    public ModelHandler=async()=>{
+    public ModelHandler = async () => {
         try {
-            const key= await AllocatKey();
-            if(!key){
-                setTimeout(()=>this.ModelHandler(),2000);
-                return;
+
+            let key: string | null = null;
+
+            // Wait until an API key is available
+            while (!key) {
+                key = await AllocatKey() as string;
+                if (!key) {
+                    console.log("No API key available. Retrying in 5s...");
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+                }
             }
-            const ans=await this.CheckAnswer(key as string);
+
+            const ans = await this.CheckAnswer(key as string);
+            console.log(key);
             await ReallocatKey(key as string);
             return ans;
         } catch (error) {

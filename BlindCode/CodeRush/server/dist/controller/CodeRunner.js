@@ -67,12 +67,17 @@ class AiCheck {
         });
         this.ModelHandler = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                const key = yield AllocatKey();
-                if (!key) {
-                    setTimeout(() => this.ModelHandler(), 2000);
-                    return;
+                let key = null;
+                // Wait until an API key is available
+                while (!key) {
+                    key = (yield AllocatKey());
+                    if (!key) {
+                        console.log("No API key available. Retrying in 5s...");
+                        yield new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+                    }
                 }
                 const ans = yield this.CheckAnswer(key);
+                console.log(key);
                 yield ReallocatKey(key);
                 return ans;
             }

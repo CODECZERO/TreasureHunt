@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
 import { getTeamsByLevel, addLevelAndSecretKey, addSecretCodeToTeam, addQuestionf, getRandomQuestionByLevel } from "../db/Query.Nosql.js";
-import AsyncHandler from "../util/AsyncHandler.js";
 const FilterTeams = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { level } = req.params; // Extract level from URL params
@@ -111,6 +110,4 @@ const getRandomQ = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(500).json(new ApiError(500, error instanceof Error ? error.message : "Internal Server Error"));
     }
 });
-const CodeHandler = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-}));
 export { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ, };

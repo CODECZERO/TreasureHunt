@@ -57,12 +57,25 @@ const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
 const AllocatKey = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const getKey = yield client.blPop("AIModelKey", 5);
-        if (!getKey)
-            return new ApiError(404, "No key is in redis");
+        if (!getKey) {
+            yield new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+            return;
+        }
         return getKey.element;
     }
     catch (error) {
         return error;
     }
 });
-export { connectRedis, ReallocatKey, AllocatKey, };
+const isKeyAvaiable = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const isKey = client.lRange("AIModelKey", 0, -1);
+        if (!isKey)
+            return false;
+        return true;
+    }
+    catch (error) {
+        return error;
+    }
+});
+export { connectRedis, ReallocatKey, AllocatKey, isKeyAvaiable };

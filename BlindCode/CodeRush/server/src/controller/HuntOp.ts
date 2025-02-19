@@ -125,10 +125,6 @@ const getRandomQ = async (req: Request, res: Response) => {
     }
 };
 
-const CodeHandler = AsyncHandler(async (req: Request, res: Response) => {
-    
-})
-
 
 export {
     FilterTeams,

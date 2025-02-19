@@ -36,7 +36,7 @@ const PmP = (parsedMessage, roomName) => __awaiter(void 0, void 0, void 0, funct
                         userId: parsedMessage.userId,
                         question: parsedMessage.question,
                         answer: parsedMessage.answer,
-                        aiResult: ans // ✅ Send AI response to WebSocket client
+                        aiResult: ans
                     }));
                 }
             }
@@ -64,11 +64,11 @@ const receiveMessage = (ws) => __awaiter(void 0, void 0, void 0, function* () {
             throw new ApiError(400, "Room name not set for WebSocket");
         }
         yield rabbitmq.subData(ws.roomName);
-        yield rabbitmq.channel.consume(rabbitmq.queue.queue, (message) => {
+        yield rabbitmq.channel.consume(rabbitmq.queue.queue, (message) => __awaiter(void 0, void 0, void 0, function* () {
             if (message) {
-                broadcastMessage(message, ws.roomName).catch(console.error);
+                yield broadcastMessage(message, ws.roomName).catch(console.error);
             }
-        });
+        }));
     }
     catch (error) {
         console.error("Error while receiving message:", error);

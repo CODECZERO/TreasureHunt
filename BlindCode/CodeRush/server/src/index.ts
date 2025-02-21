@@ -6,7 +6,6 @@ import { connectRedis } from "./db/redis.db.js";
 import { runWebSocket } from "./Websocket/Websocket.main.js";
 import rabbitmq from "./queues/rabbitMq.js";
 
-
 const connectAll=async()=>{
     await rabbitmq.connectRabbitMq("StartRoom");
     console.log("queue is connected");

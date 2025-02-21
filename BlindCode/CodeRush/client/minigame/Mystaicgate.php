@@ -1,28 +1,52 @@
 <?php
 session_start();
 
-// Define the folder for horror audio files
-$audioFolder = __DIR__ . "/hraudio";
+// Define file paths
+$codeFile = __DIR__ . "/codes.txt";
+$assignedFile = __DIR__ . "/assigned_codes.txt";
 
-// Get all available horror audio files
-$audioFiles = glob($audioFolder . "/*.mp3");
+// Load available codes from file
+function loadAvailableCodes($codeFile, $assignedFile) {
+    if (!file_exists($codeFile)) {
+        return [];
+    }
 
-// Select a random horror sound when the player loses
-$selectedAudio = !empty($audioFiles) ? $audioFiles[array_rand($audioFiles)] : "";
+    // Read all codes
+    $allCodes = file($codeFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-// Generate a random winning code (4 letters + 4 numbers)
-function generateWinningCode() {
-    $letters = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 4);
-    $numbers = substr(str_shuffle("0123456789"), 0, 4);
-    return $letters . $numbers;
+    // Read assigned codes
+    $assignedCodes = file_exists($assignedFile) ? file($assignedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
+
+    // Filter out used codes
+    return array_diff($allCodes, $assignedCodes);
 }
 
-// Assign the winning code for the session
+// Get an unused code
+function getUnusedCode($codeFile, $assignedFile) {
+    $availableCodes = loadAvailableCodes($codeFile, $assignedFile);
+
+    if (empty($availableCodes)) {
+        return "NO CODES LEFT"; // Fallback if all codes are used
+    }
+
+    $selectedCode = $availableCodes[array_rand($availableCodes)];
+
+    // Mark as used
+    file_put_contents($assignedFile, $selectedCode . PHP_EOL, FILE_APPEND);
+
+    return $selectedCode;
+}
+
+// Assign a winning code for the session
 if (!isset($_SESSION['winningCode'])) {
-    $_SESSION['winningCode'] = generateWinningCode();
+    $_SESSION['winningCode'] = getUnusedCode($codeFile, $assignedFile);
 }
 $winningCode = $_SESSION['winningCode'];
 
+// Horror sound selection
+$audioFolder = __DIR__ . "/hraudio";
+$audioFiles = glob($audioFolder . "/*.mp3");
+$selectedAudio = !empty($audioFiles) ? $audioFiles[array_rand($audioFiles)] : "";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,17 +101,17 @@ $winningCode = $_SESSION['winningCode'];
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        let player = { x: 180, y: 350, size: 20, speed: 4 }; // Slightly reduced speed
+        let player = { x: 180, y: 350, size: 20, speed: 4 }; 
         let obstacles = [];
         let gameOver = false;
         let startTime = Date.now();
-        const winTime = 45000; // 45 seconds to win (harder)
+        const winTime = 45000;
         const timerElement = document.getElementById("timer");
 
         function createObstacle() {
-            let size = Math.random() * 40 + 10; // Larger max size
+            let size = Math.random() * 40 + 10;
             let x = Math.random() * (canvas.width - size);
-            let speed = Math.random() * 3 + 2; // Increased base speed
+            let speed = Math.random() * 3 + 2;
             obstacles.push({ x, y: 0, size, speed });
         }
 
@@ -96,27 +120,22 @@ $winningCode = $_SESSION['winningCode'];
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Update countdown timer
             let timeLeft = Math.max(0, Math.floor((winTime - (Date.now() - startTime)) / 1000));
             timerElement.textContent = timeLeft;
 
-            // Check win condition
             if (timeLeft <= 0) {
                 winGame();
                 return;
             }
 
-            // Draw player
             ctx.fillStyle = "blue";
             ctx.fillRect(player.x, player.y, player.size, player.size);
 
-            // Update and draw obstacles
             ctx.fillStyle = "red";
             for (let i = 0; i < obstacles.length; i++) {
                 obstacles[i].y += obstacles[i].speed;
                 ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].size, obstacles[i].size);
 
-                // Collision detection
                 if (
                     player.x < obstacles[i].x + obstacles[i].size &&
                     player.x + player.size > obstacles[i].x &&
@@ -128,7 +147,6 @@ $winningCode = $_SESSION['winningCode'];
                 }
             }
 
-            // Remove off-screen obstacles
             obstacles = obstacles.filter(obs => obs.y < canvas.height);
 
             requestAnimationFrame(update);
@@ -141,11 +159,17 @@ $winningCode = $_SESSION['winningCode'];
         }
 
         function winGame() {
-            gameOver = true;
-            document.getElementById("winMessage").classList.remove("hidden");
-        }
+    gameOver = true;
+    document.getElementById("winMessage").style.display = "block";
 
-        // Player Movement
+    // Send the winning code to the server to save it
+    fetch("save_winning_code.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "code=" + encodeURIComponent("<?php echo $winningCode; ?>")
+    });
+}
+
         window.addEventListener("keydown", (e) => {
             if (gameOver) return;
 
@@ -155,12 +179,11 @@ $winningCode = $_SESSION['winningCode'];
             if (e.key === "ArrowDown" && player.y < canvas.height - player.size) player.y += player.speed;
         });
 
-        // Generate obstacles faster (every 700ms instead of 1s)
         setInterval(createObstacle, 700);
 
-        // Start game loop
         update();
     </script>
 
 </body>
 </html>
+

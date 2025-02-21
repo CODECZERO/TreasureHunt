@@ -50,9 +50,9 @@ const connectRedis = async () => {
 
 const AllocatKey = async () => {
     try {
-        const getKey = await client.blPop("AIModelKey", 5);
+        let getKey = await client.blPop("AIModelKey", 5);
         if (!getKey) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, 10));
             return;
         }
         return getKey.element;

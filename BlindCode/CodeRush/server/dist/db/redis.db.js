@@ -56,9 +56,9 @@ const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const AllocatKey = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const getKey = yield client.blPop("AIModelKey", 5);
+        let getKey = yield client.blPop("AIModelKey", 5);
         if (!getKey) {
-            yield new Promise(resolve => setTimeout(resolve, 5000));
+            yield new Promise(resolve => setTimeout(resolve, 10));
             return;
         }
         return getKey.element;

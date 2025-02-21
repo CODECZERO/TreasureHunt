@@ -1,26 +1,25 @@
 <?php
-session_start();
+if (isset($_GET['get_code'])) {
+    $codesFile = __DIR__ . "/codes.txt"; 
+    $assignedFile = __DIR__ . "/assigned_codes.txt"; 
 
-// Generate a random number if not set
-if (!isset($_SESSION['random_number'])) {
-    $_SESSION['random_number'] = rand(1, 100);
-    $_SESSION['attempts'] = 0;
-}
+    // Read available codes
+    $codes = file($codesFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $assignedCodes = file($assignedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-$message = "Guess a number between 1 and 100";
+    // Find an unused code
+    $unusedCodes = array_diff($codes, $assignedCodes);
+    if (count($unusedCodes) > 0) {
+        $assignedCode = array_shift($unusedCodes);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $guess = (int)$_POST['guess'];
-    $_SESSION['attempts']++;
-    
-    if ($guess < $_SESSION['random_number']) {
-        $message = "Too low! Try again.";
-    } elseif ($guess > $_SESSION['random_number']) {
-        $message = "Too high! Try again.";
+        // Save the assigned code
+        file_put_contents($assignedFile, $assignedCode . PHP_EOL, FILE_APPEND);
+
+        echo $assignedCode;
     } else {
-        $message = "🎉 Congratulations! You guessed it in " . $_SESSION['attempts'] . " attempts.";
-        session_destroy(); // Reset game
+        echo "No codes available!";
     }
+    exit;
 }
 ?>
 
@@ -28,74 +27,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Guessing Game</title>
+    <title>Catch the Star</title>
     <style>
         body {
             text-align: center;
             font-family: Arial, sans-serif;
-            margin-top: 50px;
-            background-color: #f4f4f4;
-            animation: fadeIn 1s ease-in;
+            background: skyblue;
+            overflow: hidden;
         }
-        
-        .game-container {
-            display: inline-block;
-            padding: 20px;
-            background: white;
+        #gameContainer {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            margin: auto;
+            border: 2px solid black;
+            background: lightyellow;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: gold;
+            border-radius: 50%;
+            top: 0;
+        }
+        .basket {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background: brown;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            animation: slideIn 0.5s ease-in-out;
         }
-        
-        input {
-            padding: 10px;
-            font-size: 16px;
-            border: 2px solid #007BFF;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        
-        input:focus {
-            border-color: #0056b3;
-            outline: none;
-        }
-        
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            margin-top: 10px;
-            cursor: pointer;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        
-        button:hover {
-            background-color: #0056b3;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        #winMessage {
+            display: none;
+            font-size: 24px;
+            background: white;
+            padding: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <h2>🎯 Number Guessing Game</h2>
-        <p><?php echo $message; ?></p>
-        <form method="POST">
-            <input type="number" name="guess" min="1" max="100" required>
-            <button type="submit">Submit Guess</button>
-        </form>
+    <h1>⭐ Catch the Star ⭐</h1>
+    <p>Move the basket with Left/Right Arrow Keys</p>
+    <div id="gameContainer">
+        <div class="basket" id="basket"></div>
+        <div id="winMessage">
+            🎉 You Win! 🎉 <br>
+            Your Code: <span id="winCode"></span>
+        </div>
     </div>
+    <p>Stars Caught: <span id="score">0</span> / 10</p>
+    
+    <script>
+        const gameContainer = document.getElementById("gameContainer");
+        const basket = document.getElementById("basket");
+        const winMessage = document.getElementById("winMessage");
+        const scoreDisplay = document.getElementById("score");
+        const winCode = document.getElementById("winCode");
+
+        let score = 0;
+        let basketPos = 160;
+        let gameOver = false;
+
+        function moveBasket(event) {
+            if (gameOver) return;
+            if (event.key === "ArrowLeft" && basketPos > 10) basketPos -= 20;
+            if (event.key === "ArrowRight" && basketPos < 310) basketPos += 20;
+            basket.style.left = basketPos + "px";
+        }
+
+        function createStar() {
+            if (gameOver) return;
+            let star = document.createElement("div");
+            star.classList.add("star");
+            let xPos = Math.random() * (gameContainer.clientWidth - 30);
+            star.style.left = xPos + "px";
+            gameContainer.appendChild(star);
+
+            let fallInterval = setInterval(() => {
+                let starTop = parseInt(star.style.top || 0);
+                if (starTop > 470 && xPos > basketPos - 30 && xPos < basketPos + 80) {
+                    clearInterval(fallInterval);
+                    gameContainer.removeChild(star);
+                    score++;
+                    scoreDisplay.textContent = score;
+                    if (score >= 10) winGame();
+                } else if (starTop > 500) {
+                    clearInterval(fallInterval);
+                    gameContainer.removeChild(star);
+                } else {
+                    star.style.top = (starTop + 5) + "px";
+                }
+            }, 50);
+        }
+
+        function winGame() {
+            gameOver = true;
+            fetch("?get_code=1") // Fetch the code from the server
+                .then(response => response.text())
+                .then(code => {
+                    winCode.textContent = code;
+                    winMessage.style.display = "block";
+                });
+        }
+
+        document.addEventListener("keydown", moveBasket);
+        setInterval(createStar, 1500);
+    </script>
 </body>
 </html>

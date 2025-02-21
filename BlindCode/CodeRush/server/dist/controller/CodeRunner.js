@@ -72,12 +72,11 @@ class AiCheck {
                 while (!key) {
                     key = (yield AllocatKey());
                     if (!key) {
-                        console.log("No API key available. Retrying in 5s...");
-                        yield new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+                        console.log("No API key available. Retrying in 50ms");
+                        yield new Promise(resolve => setTimeout(resolve, 300)); // Wait for 2 seconds before retrying
                     }
                 }
                 const ans = yield this.CheckAnswer(key);
-                console.log(key);
                 yield ReallocatKey(key);
                 return ans;
             }

@@ -22,7 +22,6 @@ const PmP = async (parsedMessage: MessageData, roomName: string) => {//parallel 
 
         const AiCheckModel = new AiCheck(parsedMessage.answer, parsedMessage.question);
         const ans = await AiCheckModel.ModelHandler();//non-blocking execution 
-        console.log(ans);
         if (rooms[roomName]) {
             for (const client of rooms[roomName]) {
                 if (client.readyState === WebSocket.OPEN && client.userId === parsedMessage.userId) {
@@ -46,9 +45,8 @@ const PmP = async (parsedMessage: MessageData, roomName: string) => {//parallel 
 
 const broadcastMessage = async (message: ConsumeMessage, roomName: string): Promise<void> => {
     try {
-        const messageContent = message.content.toString();
-        const parsedMessage: MessageData = JSON.parse(messageContent);
-        PmP(parsedMessage, roomName);//parallel Ai model processing -Pmp
+        const parsedMessage: MessageData = JSON.parse(message.content.toString());
+        await PmP(parsedMessage, roomName);//parallel Ai model processing -Pmp
     } catch (error) {
         console.error("Error while broadcasting message:", error);
         throw new ApiError(500, "Error while broadcasting message");

@@ -56,7 +56,8 @@ $_SESSION['assigned_audio'] = $selectedAudio;
         // Print decoded URL in the console
         console.log("Decoded URL:", decodedUrl);
     </script>
-    <h1>Your Unique Audio</h1>
+    <h1>Your Unique Audio</h1><br>
+    <h1>Open console </h1>
     <audio controls>
         <source src="<?php echo htmlspecialchars($selectedAudio); ?>" type="audio/mpeg">
         Your browser does not support the audio element.

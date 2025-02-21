@@ -73,8 +73,8 @@ class AiCheck {
             while (!key) {
                 key = await AllocatKey() as string;
                 if (!key) {
-                    console.log("No API key available. Retrying in 5s...");
-                    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 2 seconds before retrying
+                    console.log("No API key available. Retrying in 50ms");
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Wait for 2 seconds before retrying
                 }
             }
 
@@ -90,4 +90,3 @@ class AiCheck {
 export {
     AiCheck
 }
-

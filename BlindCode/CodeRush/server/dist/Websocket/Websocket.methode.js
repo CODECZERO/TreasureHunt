@@ -27,7 +27,6 @@ const PmP = (parsedMessage, roomName) => __awaiter(void 0, void 0, void 0, funct
     try {
         const AiCheckModel = new AiCheck(parsedMessage.answer, parsedMessage.question);
         const ans = yield AiCheckModel.ModelHandler(); //non-blocking execution 
-        console.log(ans);
         if (rooms[roomName]) {
             for (const client of rooms[roomName]) {
                 if (client.readyState === WebSocket.OPEN && client.userId === parsedMessage.userId) {
@@ -50,9 +49,8 @@ const PmP = (parsedMessage, roomName) => __awaiter(void 0, void 0, void 0, funct
 });
 const broadcastMessage = (message, roomName) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const messageContent = message.content.toString();
-        const parsedMessage = JSON.parse(messageContent);
-        PmP(parsedMessage, roomName); //parallel Ai model processing -Pmp
+        const parsedMessage = JSON.parse(message.content.toString());
+        yield PmP(parsedMessage, roomName); //parallel Ai model processing -Pmp
     }
     catch (error) {
         console.error("Error while broadcasting message:", error);

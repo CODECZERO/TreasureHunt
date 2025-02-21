@@ -42,10 +42,10 @@ func generateMessage(clientID, msgIndex int) string {
 	msg := MessageData{
 		MessageId:     fmt.Sprintf("MSG_%d_%d", clientID, msgIndex),
 		TypeOfMessage: "SEND_MESSAGE",
-		RoomName:      "room_40",
+		RoomName:      "Ankit",
 		UserId:        fmt.Sprintf("user_%d", clientID),
-		Question:      "2+2",
-		Answer:        "4",
+		Question:      "2+2+3",
+		Answer:        "8",
 	}
 	jsonData, _ := json.Marshal(msg)
 	return string(jsonData)

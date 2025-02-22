@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ } from "../controller/HuntOp.js";
+import { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ, addTechHubteam, Thtl, Alts } from "../controller/HuntOp.js";
 import AsyncHandler from "../util/AsyncHandler.js";
 const router = Router();
 // 📌 Route to filter teams by level
@@ -12,4 +12,7 @@ router.route("/team/register").post(AsyncHandler(TeamReg));
 router.route("/question/add").post(AsyncHandler(addQuestion));
 // 📌 Route to get a random question by level
 router.route("/question/random").post(AsyncHandler(getRandomQ));
+router.route("/techHub/reg").post(addTechHubteam);
+router.route("/techHub/leaderboard").post(Thtl);
+router.route("/techHub/addLevel").put(Alts);
 export default router;

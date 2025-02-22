@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { Scode } from "../model/SecreatCode.js";
 import { Question } from "../model/Question.js";
 import { Teams } from "../model/Teams.js";
+import { TechHub } from "../model/TechHub.js";
 const recentQuestions = new Map(); // Store question & timestamp
 const addLevelAndSecretKey = (level, secretCode) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -136,4 +137,52 @@ const getTeamsByLevel = (level, limit) => __awaiter(void 0, void 0, void 0, func
         return { status: 500, message: error instanceof Error ? error.message : "Internal Server Error" };
     }
 });
-export { addLevelAndSecretKey, getTeamsByLevel, addSecretCodeToTeam, getRandomQuestionByLevel, addQuestionf };
+const findTeamsByLevel = (level, limit = 10) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const teams = yield TechHub.find({ level })
+            .sort({ updatedAt: 1 }) // Sort by last updated time
+            .limit(limit)
+            .lean(); // Improve performance by returning plain JavaScript objects
+        return teams.map((team, index) => ({
+            rank: index + 1,
+            teamName: team.TeamName,
+            level: team.level,
+            updatedAt: team.updatedAt // Use updatedAt instead
+        }));
+    }
+    catch (error) {
+        console.error("Error finding teams:", error);
+        throw new Error("Failed to fetch leaderboard.");
+    }
+});
+// Register a new team without duplication
+const registerTeam = (teamName) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const team = yield TechHub.findOneAndUpdate({ TeamName: teamName }, // Search for existing team
+        { $setOnInsert: { TeamName: teamName, level: [] } }, // Insert only if not found
+        { upsert: true, new: true } // Ensure it inserts if not found
+        );
+        const isNew = team.level.length === 0; // Check if it was a new insertion
+        return { success: isNew, message: isNew ? "Team registered!" : "Team already exists.", team };
+    }
+    catch (error) {
+        console.error("Error registering team:", error);
+        throw new Error("Failed to register team.");
+    }
+});
+// Add a level to a team without duplication
+const addLevelToTeam = (teamName, newLevel) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const updatedTeam = yield TechHub.findOneAndUpdate({ TeamName: teamName, level: { $ne: newLevel } }, // Ensure level is not already assigned
+        { $push: { level: newLevel } }, { new: true });
+        if (!updatedTeam) {
+            return { success: false, message: "Team not found or level already assigned." };
+        }
+        return { success: true, message: "Level added successfully!", team: updatedTeam };
+    }
+    catch (error) {
+        console.error("Error adding level to team:", error);
+        throw new Error("Failed to add level.");
+    }
+});
+export { addLevelAndSecretKey, getTeamsByLevel, addSecretCodeToTeam, getRandomQuestionByLevel, addQuestionf, addLevelToTeam, findTeamsByLevel, registerTeam };

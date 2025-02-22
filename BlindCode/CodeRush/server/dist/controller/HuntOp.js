@@ -9,7 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { ApiError } from "../util/ApiError.js";
 import { ApiResponse } from "../util/ApiResponse.js";
-import { getTeamsByLevel, addLevelAndSecretKey, addSecretCodeToTeam, addQuestionf, getRandomQuestionByLevel } from "../db/Query.Nosql.js";
+import { getTeamsByLevel, addLevelAndSecretKey, addSecretCodeToTeam, addQuestionf, getRandomQuestionByLevel, registerTeam, findTeamsByLevel, addLevelToTeam } from "../db/Query.Nosql.js";
+import AsyncHandler from "../util/AsyncHandler.js";
 const FilterTeams = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { level } = req.params; // Extract level from URL params
@@ -110,4 +111,31 @@ const getRandomQ = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(500).json(new ApiError(500, error instanceof Error ? error.message : "Internal Server Error"));
     }
 });
-export { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ, };
+const addTechHubteam = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { TeamName } = req.body;
+    if (!TeamName)
+        throw new ApiError(400, "Invalid Team Name");
+    const TeamReg = yield registerTeam(TeamName);
+    if (!TeamReg)
+        throw new ApiError(500, `Something wnet wrong while creating team ${TeamReg}`);
+    return res.status(200).json(new ApiResponse(200, TeamReg, "Successful"));
+}));
+const Thtl = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { level, limit } = req.body;
+    if (!level && !limit)
+        throw new ApiError(400, "Invalid Team Name");
+    const findlevel = yield findTeamsByLevel(level, limit);
+    if (!findlevel)
+        throw new ApiError(500, `Something wnet wrong while creating team ${findlevel}`);
+    return res.status(200).json(new ApiResponse(200, findlevel, "Successful"));
+}));
+const Alts = AsyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { TeamName, level } = req.body;
+    if (!level && !TeamName)
+        throw new ApiError(400, "Invalid Team Name");
+    const findlevel = yield addLevelToTeam(TeamName, level);
+    if (!findlevel)
+        throw new ApiError(500, `Something wnet wrong while creating team ${findlevel}`);
+    return res.status(200).json(new ApiResponse(200, findlevel, "Successful"));
+}));
+export { FilterTeams, addSecreaKey, TeamReg, addQuestion, getRandomQ, addTechHubteam, Alts, Thtl };

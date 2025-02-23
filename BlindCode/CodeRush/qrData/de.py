@@ -64,7 +64,7 @@ A path untold, yet nothing strange.
 A port of calls, where seekers find,
 The key within, if you're inclined.
 Look beyond, and you shall see,
-A hidden way to set you free.YUhSMGNEb3ZMMnh2WTJGc2FHOXpkRG80TURBd0wyTjBaa3h2WjJsdUxuQm9jQT09'''
+A hidden way to set you free.TDJOMFpreHZaMmx1TG5Cb2NBbz0KCg=='''
     encode_text_to_qr_style_image(input_text)
 
     decoded_text = decode_qr_style_image("qr_style_encoded.png")

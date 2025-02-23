@@ -1,7 +1,7 @@
 import amqplib, { Channel, Connection } from 'amqplib';
 
 class rabbitMqFunction {
-    private exchangeName = 'chat_exchagne';
+    private exchangeName = 'TechHubWork';
     private messageTTL = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
     public channel!: Channel;
     public queue: any;
@@ -14,7 +14,7 @@ class rabbitMqFunction {
             this.channel = await this.connection.createChannel();
 
             this.channel.assertExchange(this.exchangeName, 'topic', {
-                durable: true,
+                durable: false,
             });
         }
     };
@@ -36,7 +36,7 @@ class rabbitMqFunction {
         if (!this.channel) {
             await this.connectRabbitMq(roomName);
         }
-        this.queue = await this.channel.assertQueue(roomName, { exclusive: false, arguments: { 'x-message-ttl': this.messageTTL, } });
+        this.queue = await this.channel.assertQueue(roomName, { exclusive: true,autoDelete:true,durable:false, arguments: { 'x-message-ttl': this.messageTTL, } });
         const message = await this.channel.bindQueue(
             this.queue.queue,
             this.exchangeName,

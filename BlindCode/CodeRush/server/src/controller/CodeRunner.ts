@@ -63,28 +63,29 @@ class AiCheck {
             return error;
         }
     }
-
     public ModelHandler = async () => {
         try {
-
-            let key: string | null = null;
-
-            // Wait until an API key is available
-            while (!key) {
-                key = await AllocatKey() as string;
-                if (!key) {
-                    console.log("No API key available. Retrying in 50ms");
-                    await new Promise(resolve => setTimeout(resolve, 300)); // Wait for 2 seconds before retrying
-                }
+          let key: string | null = null;
+          let retryDelay = 50;  // initial delay
+          const maxDelay = 5000; // maximum delay
+      
+          // Wait until an API key is available
+          while (!key) {
+            key = await AllocatKey() as string;  // AllocatKey uses blPop on Redis
+            if (!key) {
+              console.log(`No API key available. Retrying in ${retryDelay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              retryDelay = Math.min(retryDelay * 2, maxDelay); // exponential backoff
             }
-
-            const ans = await this.CheckAnswer(key as string);
-            await ReallocatKey(key as string);
-            return ans;
+          }
+      
+          const ans = await this.CheckAnswer(key);
+          await ReallocatKey(key);
+          return ans;
         } catch (error) {
-            throw error;
+          throw error;
         }
-    }
+      };
 }
 
 export {

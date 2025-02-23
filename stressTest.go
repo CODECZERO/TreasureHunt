@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,8 +16,8 @@ import (
 // Constants
 const (
 	serverURL         = "ws://localhost:3000/" // WebSocket server URL
-	totalClients      = 10  // Number of concurrent WebSocket connections
-	messagesPerClient = 1  // Number of messages each client will send
+	totalClients      = 20  // Number of concurrent WebSocket connections
+	messagesPerClient = 1   // Number of messages each client will send
 )
 
 // Struct to store test results
@@ -37,15 +38,33 @@ type MessageData struct {
 	Answer        string `json:"answer"`
 }
 
-// Generate a properly formatted JSON message
-func generateMessage(clientID, msgIndex int) string {
+// AIResponse represents the expected response structure from the AI model
+type AIResponse struct {
+	MessageId string `json:"MessageId"`
+	RoomName  string `json:"roomName"`
+	UserId    string `json:"userId"`
+	Question  string `json:"question"`
+	Answer    string `json:"answer"`
+	AIResult  []struct {
+		Content struct {
+			Parts []struct {
+				Text string `json:"text"`
+			} `json:"parts"`
+			Role string `json:"role"`
+		} `json:"content"`
+		FinishReason string `json:"finishReason"`
+	} `json:"aiResult"`
+}
+
+// Generate a properly formatted JSON message with a custom answer
+func generateMessage(clientID, msgIndex int, answer string) string {
 	msg := MessageData{
 		MessageId:     fmt.Sprintf("MSG_%d_%d", clientID, msgIndex),
 		TypeOfMessage: "SEND_MESSAGE",
-		RoomName:      "Ankit",
+		RoomName:      "Akshf",
 		UserId:        fmt.Sprintf("user_%d", clientID),
 		Question:      "2+2+3",
-		Answer:        "8",
+		Answer:        answer,
 	}
 	jsonData, _ := json.Marshal(msg)
 	return string(jsonData)
@@ -67,10 +86,14 @@ func websocketClient(wg *sync.WaitGroup, results *TestResults, clientID int) {
 	}
 	defer conn.Close()
 
+	// Initially use a base answer; for example "7"
+	answer := "7"
+
 	for i := 0; i < messagesPerClient; i++ {
 		start := time.Now()
 
-		message := generateMessage(clientID, i) // Generate correctly formatted JSON
+		// Generate the message with the current answer
+		message := generateMessage(clientID, i, answer)
 		err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 		if err != nil {
 			log.Printf("Client %d: Failed to send message: %v\n", clientID, err)
@@ -80,6 +103,7 @@ func websocketClient(wg *sync.WaitGroup, results *TestResults, clientID int) {
 			continue
 		}
 
+		// Read the response
 		_, response, err := conn.ReadMessage()
 		duration := time.Since(start)
 
@@ -89,8 +113,31 @@ func websocketClient(wg *sync.WaitGroup, results *TestResults, clientID int) {
 			log.Printf("Client %d: Failed to receive response: %v\n", clientID, err)
 			results.failureCount++
 		} else {
+			// Log the raw response
 			log.Printf("Client %d: Received response: %s\n", clientID, string(response))
-			results.successCount++
+
+			// Parse the response JSON into AIResponse
+			var aiResp AIResponse
+			if err := json.Unmarshal(response, &aiResp); err != nil {
+				log.Printf("Client %d: Error parsing response JSON: %v\n", clientID, err)
+				results.failureCount++
+			} else {
+				// Check if the AI result is valid (e.g., text equals "True")
+				if len(aiResp.AIResult) > 0 &&
+					len(aiResp.AIResult[0].Content.Parts) > 0 &&
+					strings.TrimSpace(aiResp.AIResult[0].Content.Parts[0].Text) == "True" {
+					log.Printf("Client %d: AI response valid.", clientID)
+					results.successCount++
+				} else {
+					log.Printf("Client %d: AI response invalid. Retrying with alternative answer...", clientID)
+					// For example, if the response was "False", try a different answer.
+					// You can implement your logic here to modify the message.
+					answer = "7" // change the answer to a new value
+					// Optionally, you might want to resend the request here.
+					// For simplicity, we count this as a failure:
+					results.failureCount++
+				}
+			}
 		}
 		results.mutex.Unlock()
 

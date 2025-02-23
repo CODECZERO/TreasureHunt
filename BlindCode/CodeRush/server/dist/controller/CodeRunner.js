@@ -68,12 +68,15 @@ class AiCheck {
         this.ModelHandler = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let key = null;
+                let retryDelay = 50; // initial delay
+                const maxDelay = 5000; // maximum delay
                 // Wait until an API key is available
                 while (!key) {
-                    key = (yield AllocatKey());
+                    key = (yield AllocatKey()); // AllocatKey uses blPop on Redis
                     if (!key) {
-                        console.log("No API key available. Retrying in 50ms");
-                        yield new Promise(resolve => setTimeout(resolve, 300)); // Wait for 2 seconds before retrying
+                        console.log(`No API key available. Retrying in ${retryDelay}ms...`);
+                        yield new Promise(resolve => setTimeout(resolve, retryDelay));
+                        retryDelay = Math.min(retryDelay * 2, maxDelay); // exponential backoff
                     }
                 }
                 const ans = yield this.CheckAnswer(key);

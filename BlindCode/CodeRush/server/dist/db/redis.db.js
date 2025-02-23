@@ -19,6 +19,7 @@ const keys = {
     key3: process.env.KEY3,
     key4: process.env.KEY4,
     key5: process.env.KEY5,
+    key6: process.env.KEY6,
 };
 const ReallocatKey = (key) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -33,10 +34,12 @@ const ReallocatKey = (key) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const addKeyTORedis = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        for (const key of Object.values(keys)) {
-            if (key)
-                yield ReallocatKey(key); //using this function key will be added back or added to redis server for futhere use.
-        }
+        // Filter out undefined keys and map them to a promise returned by ReallocatKey
+        const promises = Object.values(keys)
+            .filter(key => key)
+            .map(key => ReallocatKey(key));
+        // Wait for all reallocation promises to resolve concurrently
+        yield Promise.all(promises);
     }
     catch (error) {
         throw error;
@@ -56,7 +59,7 @@ const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const AllocatKey = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let getKey = yield client.blPop("AIModelKey", 5);
+        let getKey = yield client.blPop("AIModelKey", 2);
         if (!getKey) {
             yield new Promise(resolve => setTimeout(resolve, 10));
             return;

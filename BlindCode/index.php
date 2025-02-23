@@ -2,6 +2,12 @@
 // Start session
 session_start();
 
+// Redirect to registration page if no TeamName cookie is found
+if (!isset($_COOKIE['TeamName'])) {
+    header("Location: reg.php");
+    exit();
+}
+
 // Set session timer to 90 minutes if not set
 if (!isset($_SESSION['end_time'])) {
     $_SESSION['end_time'] = time() + (90 * 60); // 1 hour 30 minutes
